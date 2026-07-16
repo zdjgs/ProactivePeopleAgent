@@ -1,0 +1,5 @@
+# 本地开发默认 profile（见 application.yml spring.profiles.active）
+logging:
+  level:
+    com.proactiveperson: DEBUG
+    com.proactiveperson.proactive.schedule: TRACE

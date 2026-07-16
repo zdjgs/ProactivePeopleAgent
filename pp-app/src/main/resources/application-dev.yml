@@ -1,0 +1,8 @@
+# 开发环境：可连共享中间件，仍默认不启 LLM / 早间推送
+logging:
+  level:
+    com.proactiveperson: DEBUG
+
+pp:
+  proactive:
+    morning-push-enabled: false

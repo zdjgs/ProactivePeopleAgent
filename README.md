@@ -45,7 +45,16 @@ set OPENAI_API_KEY=sk-xxx
 mvn -pl pp-app -am spring-boot:run
 ```
 
-然后：`POST http://localhost:8080/api/chat`，body：`{"message":"你好"}`
+然后：`POST http://localhost:8080/api/chat`
+
+```json
+{"sessionId":"s1","userId":"u1","message":"你好"}
+```
+
+- `sessionId` 必填，用于多轮记忆
+- `userId` 可选，默认 `anonymous`；每轮成功后写入短期记忆层
+
+架构与模块边界见 `docs/sdd/architecture.md`。
 
 ## 文档驱动开发（SDD）
 
