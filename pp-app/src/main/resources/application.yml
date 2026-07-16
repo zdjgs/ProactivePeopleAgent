@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: proactive-people-agent
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
 management:
   endpoints:
@@ -20,7 +22,9 @@ pp:
     api-key: ${OPENAI_API_KEY:}
     base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
     model-name: ${OPENAI_MODEL:gpt-4o-mini}
+    temperature: ${OPENAI_TEMPERATURE:0.7}
     timeout-seconds: 60
+    chat-memory-max-messages: 20
   memory:
     provider: stub
   wechat:
@@ -32,7 +36,21 @@ pp:
   proactive:
     morning-push-enabled: false
     daily-push-limit: 2
+    default-timezone: Asia/Shanghai
+    morning-window-start-hour: 8
+    morning-window-end-hour: 10
     morning-scan-cron: "0 */1 8-10 * * *"
+  infra:
+    postgres:
+      enabled: false
+      url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/pp_agent}
+    redis:
+      enabled: false
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    mem0:
+      enabled: false
+      base-url: ${MEM0_BASE_URL:http://localhost:8000}
 
 logging:
   level:

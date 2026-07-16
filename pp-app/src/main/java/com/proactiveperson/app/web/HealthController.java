@@ -1,7 +1,8 @@
 package com.proactiveperson.app.web;
 
-import com.proactiveperson.agent.Assistant;
+import com.proactiveperson.agent.ChatService;
 import com.proactiveperson.agent.config.AgentGraphProperties;
+import com.proactiveperson.app.config.InfraProperties;
 import com.proactiveperson.common.api.ApiResponse;
 import com.proactiveperson.proactive.config.ProactiveProperties;
 import org.springframework.beans.factory.ObjectProvider;
@@ -16,14 +17,17 @@ public class HealthController {
 
     private final AgentGraphProperties llmProperties;
     private final ProactiveProperties proactiveProperties;
-    private final ObjectProvider<Assistant> assistant;
+    private final InfraProperties infraProperties;
+    private final ObjectProvider<ChatService> chatService;
 
     public HealthController(AgentGraphProperties llmProperties,
                             ProactiveProperties proactiveProperties,
-                            ObjectProvider<Assistant> assistant) {
+                            InfraProperties infraProperties,
+                            ObjectProvider<ChatService> chatService) {
         this.llmProperties = llmProperties;
         this.proactiveProperties = proactiveProperties;
-        this.assistant = assistant;
+        this.infraProperties = infraProperties;
+        this.chatService = chatService;
     }
 
     @GetMapping({"/", "/api/health"})
@@ -32,9 +36,16 @@ public class HealthController {
         body.put("app", "ProactivePeopleAgent");
         body.put("status", "UP");
         body.put("llmEnabled", llmProperties.isEnabled());
-        body.put("assistantReady", assistant.getIfAvailable() != null);
+        body.put("chatReady", chatService.getIfAvailable() != null);
         body.put("morningPushEnabled", proactiveProperties.isMorningPushEnabled());
         body.put("dailyPushLimit", proactiveProperties.getDailyPushLimit());
+        body.put("morningWindow", proactiveProperties.getMorningWindowStartHour()
+                + "-" + proactiveProperties.getMorningWindowEndHour());
+        body.put("infra", Map.of(
+                "postgresEnabled", infraProperties.getPostgres().isEnabled(),
+                "redisEnabled", infraProperties.getRedis().isEnabled(),
+                "mem0Enabled", infraProperties.getMem0().isEnabled()
+        ));
         return ApiResponse.ok(body);
     }
 }

@@ -1,12 +1,16 @@
 package com.proactiveperson.common.api;
 
-public record ApiResponse<T>(boolean success, String message, T data) {
+public record ApiResponse<T>(boolean success, String message, T data, String code) {
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, "ok", data);
+        return new ApiResponse<>(true, "ok", data, null);
     }
 
     public static <T> ApiResponse<T> fail(String message) {
-        return new ApiResponse<>(false, message, null);
+        return fail(message, null);
+    }
+
+    public static <T> ApiResponse<T> fail(String message, String code) {
+        return new ApiResponse<>(false, message, null, code);
     }
 }
