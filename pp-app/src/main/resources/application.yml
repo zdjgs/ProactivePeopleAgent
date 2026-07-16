@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: proactive-people-agent
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+pp:
+  llm:
+    enabled: ${PP_LLM_ENABLED:false}
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    model-name: ${OPENAI_MODEL:gpt-4o-mini}
+    timeout-seconds: 60
+  memory:
+    provider: stub
+  wechat:
+    provider: stub
+  mcp:
+    provider: stub
+  monitor:
+    provider: stub
+  proactive:
+    morning-push-enabled: false
+    daily-push-limit: 2
+    morning-scan-cron: "0 */1 8-10 * * *"
+
+logging:
+  level:
+    com.proactiveperson: INFO
