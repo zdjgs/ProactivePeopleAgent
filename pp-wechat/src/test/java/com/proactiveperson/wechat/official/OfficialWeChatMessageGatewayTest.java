@@ -1,5 +1,6 @@
 package com.proactiveperson.wechat.official;
 
+import com.proactiveperson.common.state.InMemoryStateStore;
 import com.proactiveperson.wechat.WeChatMessageGateway;
 import com.proactiveperson.wechat.WeChatOutboundChannel;
 import com.proactiveperson.wechat.api.WeChatOfficialApiClient;
@@ -33,7 +34,7 @@ class OfficialWeChatMessageGatewayTest {
         properties = new WeChatProperties();
         properties.setCustomerServiceWindowHours(48);
         properties.setTemplateId("tpl");
-        windowTracker = new CustomerServiceWindowTracker(properties);
+        windowTracker = new CustomerServiceWindowTracker(properties, new InMemoryStateStore());
         gateway = new OfficialWeChatMessageGateway(apiClient, windowTracker, properties);
     }
 

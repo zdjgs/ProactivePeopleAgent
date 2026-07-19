@@ -1,6 +1,7 @@
 package com.proactiveperson.proactive.user;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 主动推送候选用户源（后续可换 DB / 后台配置）。
@@ -8,4 +9,6 @@ import java.util.List;
 public interface ProactiveUserRepository {
 
     List<ProactiveUser> findAllCandidates();
+
+    Optional<ProactiveUser> findByOpenId(String openId);
 }

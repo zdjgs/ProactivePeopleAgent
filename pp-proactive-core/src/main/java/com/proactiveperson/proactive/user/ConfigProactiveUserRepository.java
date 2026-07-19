@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ConfigProactiveUserRepository implements ProactiveUserRepository {
@@ -34,6 +35,16 @@ public class ConfigProactiveUserRepository implements ProactiveUserRepository {
                     entry.isDoNotDisturb()));
         }
         return List.copyOf(users);
+    }
+
+    @Override
+    public Optional<ProactiveUser> findByOpenId(String openId) {
+        if (!StringUtils.hasText(openId)) {
+            return Optional.empty();
+        }
+        return findAllCandidates().stream()
+                .filter(u -> openId.equals(u.openId()))
+                .findFirst();
     }
 
     private ZoneId resolveZone(String timezone) {

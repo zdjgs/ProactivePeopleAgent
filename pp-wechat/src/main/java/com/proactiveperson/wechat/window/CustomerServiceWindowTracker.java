@@ -1,5 +1,6 @@
 package com.proactiveperson.wechat.window;
 
+import com.proactiveperson.common.state.StateStore;
 import com.proactiveperson.wechat.config.WeChatProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -7,33 +8,35 @@ import org.springframework.stereotype.Service;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 客服消息 48h 互动窗口：以用户最近一次入站消息时间为起点。
- * <p>
- * 进程内存储，后续可替换为 Redis（与防干扰偏好缓存同一路径）。
+ * 状态经 {@link StateStore} 外置，可切换 Redis 供多实例共享。
  */
 @Service
 public class CustomerServiceWindowTracker {
 
+    private static final String KEY_PREFIX = "pp:wechat:cs-window:";
+
     private final WeChatProperties properties;
+    private final StateStore stateStore;
     private final Clock clock;
-    private final Map<String, Instant> lastInboundAt = new ConcurrentHashMap<>();
 
     @Autowired
-    public CustomerServiceWindowTracker(WeChatProperties properties) {
-        this(properties, Clock.systemUTC());
+    public CustomerServiceWindowTracker(WeChatProperties properties, StateStore stateStore) {
+        this(properties, stateStore, Clock.systemUTC());
     }
 
-    public static CustomerServiceWindowTracker createForTest(WeChatProperties properties, Clock clock) {
-        return new CustomerServiceWindowTracker(properties, clock);
+    public static CustomerServiceWindowTracker createForTest(WeChatProperties properties,
+                                                             StateStore stateStore,
+                                                             Clock clock) {
+        return new CustomerServiceWindowTracker(properties, stateStore, clock);
     }
 
-    private CustomerServiceWindowTracker(WeChatProperties properties, Clock clock) {
+    private CustomerServiceWindowTracker(WeChatProperties properties, StateStore stateStore, Clock clock) {
         this.properties = properties;
+        this.stateStore = stateStore;
         this.clock = clock;
     }
 
@@ -41,15 +44,24 @@ public class CustomerServiceWindowTracker {
         if (openId == null || openId.isBlank() || at == null) {
             return;
         }
-        lastInboundAt.merge(openId, at, (old, neu) -> neu.isAfter(old) ? neu : old);
+        String key = key(openId);
+        Optional<Instant> existing = lastInbound(openId);
+        if (existing.isPresent() && !at.isAfter(existing.get())) {
+            return;
+        }
+        Duration ttl = Duration.ofHours(properties.getCustomerServiceWindowHours() + 1L);
+        stateStore.set(key, at.toString(), ttl);
     }
 
     public Optional<Instant> lastInbound(String openId) {
-        return Optional.ofNullable(lastInboundAt.get(openId));
+        if (openId == null || openId.isBlank()) {
+            return Optional.empty();
+        }
+        return stateStore.get(key(openId)).flatMap(this::parseInstant);
     }
 
     public boolean isWithinCustomerServiceWindow(String openId) {
-        Instant last = lastInboundAt.get(openId);
+        Instant last = lastInbound(openId).orElse(null);
         if (last == null) {
             return false;
         }
@@ -60,6 +72,18 @@ public class CustomerServiceWindowTracker {
     }
 
     public void clear() {
-        lastInboundAt.clear();
+        // 无全量枚举；测试使用独立 InMemoryStateStore 实例即可
+    }
+
+    private Optional<Instant> parseInstant(String raw) {
+        try {
+            return Optional.of(Instant.parse(raw));
+        } catch (Exception ex) {
+            return Optional.empty();
+        }
+    }
+
+    private static String key(String openId) {
+        return KEY_PREFIX + openId;
     }
 }

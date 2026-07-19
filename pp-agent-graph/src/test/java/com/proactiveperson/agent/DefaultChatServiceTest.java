@@ -31,7 +31,7 @@ class DefaultChatServiceTest {
 
     @Test
     void chatPersistsShortTermMemoryAfterSuccessfulReply() {
-        when(assistant.chat("session-1", "今天有点累")).thenReturn("先歇会儿，我陪你。");
+        when(assistant.chat("u1:session-1", "今天有点累")).thenReturn("先歇会儿，我陪你。");
 
         ChatService.ChatResult result = chatService.chat("u1", "session-1", "今天有点累");
 
@@ -44,7 +44,7 @@ class DefaultChatServiceTest {
 
     @Test
     void chatStillSucceedsWhenMemoryPersistFails() {
-        when(assistant.chat("session-1", "你好")).thenReturn("我在呢");
+        when(assistant.chat("u1:session-1", "你好")).thenReturn("我在呢");
         org.mockito.Mockito.doThrow(new com.proactiveperson.common.exception.MemoryInvocationException("mem0 down"))
                 .when(memoryService).add(eq("u1"), eq(MemoryLayer.SHORT_TERM), any());
 
@@ -55,7 +55,7 @@ class DefaultChatServiceTest {
 
     @Test
     void chatUsesAnonymousUserWhenUserIdMissing() {
-        when(assistant.chat("session-2", "hi")).thenReturn("你好");
+        when(assistant.chat("anonymous:session-2", "hi")).thenReturn("你好");
 
         chatService.chat(null, "session-2", "hi");
 
@@ -63,8 +63,14 @@ class DefaultChatServiceTest {
     }
 
     @Test
+    void chatBindsMemoryIdToUserAndSession() {
+        assertThat(DefaultChatService.memoryId("alice", "s1")).isEqualTo("alice:s1");
+        assertThat(DefaultChatService.memoryId("bob", "s1")).isEqualTo("bob:s1");
+    }
+
+    @Test
     void chatWrapsLlmFailure() {
-        when(assistant.chat("session-3", "fail")).thenThrow(new RuntimeException("upstream timeout"));
+        when(assistant.chat("u1:session-3", "fail")).thenThrow(new RuntimeException("upstream timeout"));
 
         assertThatThrownBy(() -> chatService.chat("u1", "session-3", "fail"))
                 .isInstanceOf(LlmInvocationException.class)

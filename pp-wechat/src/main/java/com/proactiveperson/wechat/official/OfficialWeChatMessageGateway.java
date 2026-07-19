@@ -34,7 +34,10 @@ public class OfficialWeChatMessageGateway implements WeChatMessageGateway {
 
     @Override
     public SendResult sendCustomerText(String openId, String content) {
-        validate(openId, content);
+        SendResult invalid = validate(openId, content, WeChatOutboundChannel.CUSTOMER_SERVICE);
+        if (invalid != null) {
+            return invalid;
+        }
         try {
             String messageId = apiClient.sendCustomerText(openId, content);
             log.info("wechat customer text sent openId={} messageId={} sentAt={} contentLength={}",
@@ -48,7 +51,10 @@ public class OfficialWeChatMessageGateway implements WeChatMessageGateway {
 
     @Override
     public SendResult sendTemplateText(String openId, String content) {
-        validate(openId, content);
+        SendResult invalid = validate(openId, content, WeChatOutboundChannel.TEMPLATE);
+        if (invalid != null) {
+            return invalid;
+        }
         try {
             String messageId = apiClient.sendTemplateText(openId, content);
             log.info("wechat template text sent openId={} messageId={} sentAt={} templateId={}",
@@ -82,12 +88,13 @@ public class OfficialWeChatMessageGateway implements WeChatMessageGateway {
                 : WeChatOutboundChannel.TEMPLATE;
     }
 
-    private static void validate(String openId, String content) {
+    private static SendResult validate(String openId, String content, WeChatOutboundChannel channel) {
         if (!StringUtils.hasText(openId)) {
-            throw new WeChatInvocationException("openId 不能为空");
+            return SendResult.fail(channel, "openId 不能为空");
         }
         if (!StringUtils.hasText(content)) {
-            throw new WeChatInvocationException("消息内容不能为空");
+            return SendResult.fail(channel, "消息内容不能为空");
         }
+        return null;
     }
 }

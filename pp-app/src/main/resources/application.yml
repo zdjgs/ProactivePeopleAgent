@@ -17,6 +17,13 @@ management:
       show-details: when_authorized
 
 pp:
+  api:
+    auth-enabled: ${PP_API_AUTH_ENABLED:false}
+    token: ${PP_API_TOKEN:}
+  state:
+    # memory | redis — 配额预占与微信 48h 窗口共享
+    store: ${PP_STATE_STORE:memory}
+    redis-uri: ${PP_STATE_REDIS_URI:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}/0}
   llm:
     enabled: ${PP_LLM_ENABLED:false}
     api-key: ${OPENAI_API_KEY:}
@@ -64,6 +71,13 @@ pp:
     #     location-authorized: true
     #     city: 上海
     #     do-not-disturb: false
+  disturbance:
+    # memory（默认）| redis
+    cache-provider: ${PP_DISTURBANCE_CACHE:memory}
+    cache-ttl-seconds: 300
+    redis-uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}/0
+    append-mute-hint: true
+    mute-hint: 回复「今天别打扰」可暂停今日主动消息。
   infra:
     postgres:
       enabled: false

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -30,10 +31,10 @@ public class ChatController {
             throw new LlmNotEnabledException();
         }
         ChatService.ChatResult result = service.chat(request.userId(), request.sessionId(), request.message());
-        return ApiResponse.ok(Map.of(
-                "sessionId", result.sessionId(),
-                "reply", result.reply()
-        ));
+        Map<String, String> body = new LinkedHashMap<>();
+        body.put("sessionId", result.sessionId());
+        body.put("reply", result.reply() == null ? "" : result.reply());
+        return ApiResponse.ok(body);
     }
 
     public record ChatRequest(

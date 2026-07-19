@@ -5,10 +5,10 @@ import com.proactiveperson.memory.MemoryService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @ConditionalOnProperty(name = "pp.memory.provider", havingValue = "stub", matchIfMissing = true)
@@ -19,7 +19,7 @@ public class InMemoryMemoryService implements MemoryService {
 
     @Override
     public void add(String userId, MemoryLayer layer, String content) {
-        store.computeIfAbsent(key(userId, layer), k -> new ArrayList<>()).add(content);
+        store.computeIfAbsent(key(userId, layer), k -> new CopyOnWriteArrayList<>()).add(content);
     }
 
     @Override

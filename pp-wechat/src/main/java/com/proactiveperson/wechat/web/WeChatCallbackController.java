@@ -1,6 +1,7 @@
 package com.proactiveperson.wechat.web;
 
 import com.proactiveperson.wechat.config.WeChatProperties;
+import com.proactiveperson.wechat.inbound.WeChatInboundListener;
 import com.proactiveperson.wechat.inbound.WeChatXmlMessageParser;
 import com.proactiveperson.wechat.security.WeChatSignatureVerifier;
 import com.proactiveperson.wechat.window.CustomerServiceWindowTracker;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
- * 微信服务器回调：URL 验签 + 入站消息（刷新 48h 客服窗口）。
+ * 微信服务器回调：URL 验签 + 入站消息（刷新 48h 客服窗口）+ 业务监听。
  */
 @RestController
 @RequestMapping("/api/wechat/callback")
@@ -29,15 +32,18 @@ public class WeChatCallbackController {
     private final WeChatSignatureVerifier signatureVerifier;
     private final WeChatXmlMessageParser messageParser;
     private final CustomerServiceWindowTracker windowTracker;
+    private final List<WeChatInboundListener> inboundListeners;
 
     public WeChatCallbackController(WeChatProperties properties,
                                     WeChatSignatureVerifier signatureVerifier,
                                     WeChatXmlMessageParser messageParser,
-                                    CustomerServiceWindowTracker windowTracker) {
+                                    CustomerServiceWindowTracker windowTracker,
+                                    List<WeChatInboundListener> inboundListeners) {
         this.properties = properties;
         this.signatureVerifier = signatureVerifier;
         this.messageParser = messageParser;
         this.windowTracker = windowTracker;
+        this.inboundListeners = inboundListeners == null ? List.of() : inboundListeners;
     }
 
     @GetMapping(produces = MediaType.TEXT_PLAIN_VALUE)
@@ -75,7 +81,13 @@ public class WeChatCallbackController {
                     msg.msgType(),
                     msg.createTime(),
                     msg.content() == null ? 0 : msg.content().length());
-            // 文本回复编排留给对话链路（ChatService / Agent）；此处只维护窗口与可观测日志
+            for (WeChatInboundListener listener : inboundListeners) {
+                try {
+                    listener.onInbound(msg);
+                } catch (Exception ex) {
+                    log.warn("wechat inbound listener failed: {}", ex.getMessage());
+                }
+            }
         }, () -> log.warn("wechat inbound xml parse empty"));
 
         return ResponseEntity.ok("success");

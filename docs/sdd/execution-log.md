@@ -1,5 +1,42 @@
 # 执行日志
 
+## [2026-07-19 14:54] - 有条件验收通过（T-006）
+- 任务 ID：T-006
+- 关联 REQ：REQ-006 → REQ-010（分期）
+- 操作详情：
+  - PRD：REQ-006 验收标准 2 改为「闸门由调用方传入 HIGH」；REQ-010 增补 PushPriority 判定
+  - 看板：T-006 👀 → ✅；T-008 验收补 HIGH 闭环
+- 状态变更：T-006 👀 → ✅（有条件）
+- 已知债（未阻塞验收，后续可单开小修）：
+  1. REST `/api/preferences/disturbance` 未挂 `X-API-Key`（应对齐 `ApiSecurityConfig`）
+  2. 微信指令 `contains` 易误触 → 宜整句/前缀精确匹配
+  3. CUSTOM_HOURS 无微信指令；`start==end` 整日勿扰语义偏意外
+  4. 防干扰 Redis 与 StateStore 双连接；Controller 未统一 ApiResponse / Mem0 失败打穿 5xx
+- Commit：（未提交）
+
+## [2026-07-19 14:48] - 完成编码（T-016 审查前硬化）
+- 任务 ID：T-016
+- 关联 REQ：REQ-002、REQ-003、REQ-004、REQ-005
+- 操作详情：
+  - 新增：`StateStore` / `InMemoryStateStore` / `RedisStateStore`、`ApiSecurityConfig`
+  - 改造：`DailyPushQuotaService` 早间每日一次预占；`MorningPushService` 失败释放；`CustomerServiceWindowTracker` 外置
+  - 改造：ChatMemory=`userId:sessionId`；`Assistant.complete`；Mem0 严格分层；微信 token 重试 + timestamp
+  - 测试：配额/早间一次/回调 skew/token 重试/Mem0 分层；`mvn -pl pp-app -am clean test` 通过
+- 状态变更：T-016 → 👀
+- Commit：（未提交）
+
+## [2026-07-19 14:45] - 完成编码（T-006 防干扰模式）
+- 任务 ID：T-006
+- 关联 REQ：REQ-006
+- 操作详情：
+  - 新增：`DisturbanceMode`/`PushPriority`/`DisturbancePreference`/`DisturbancePolicy`
+  - 新增：`DisturbancePreferenceService`、`PreferenceCache`（memory TTL / Redis Lettuce）
+  - 新增：`DisturbanceCommandListener`（今天别打扰/安静/仅重要/关闭）、`DisturbancePreferenceController`
+  - 改造：`MorningPushGate` 接策略+忙碌度；`MorningPushService` 追加静音提示；配置 `pp.disturbance.*`
+  - 测试：Policy/Preference/Command/Gate/MorningPush + 全量 `mvn -pl pp-app -am clean test` 通过
+- 状态变更：T-006 ⬜ → 🔄 → 👀；T-005 → ✅
+- Commit：（未提交）
+
 ## [2026-07-19 14:38] - 完成编码（T-005 早间主动对话）
 - 任务 ID：T-005
 - 关联 REQ：REQ-005

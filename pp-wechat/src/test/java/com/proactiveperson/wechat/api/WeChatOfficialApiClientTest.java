@@ -76,4 +76,25 @@ class WeChatOfficialApiClientTest {
                 .contains("\"template_id\":\"tpl_001\"")
                 .contains("\"thing1\"");
     }
+
+    @Test
+    void retriesOnceWhenAccessTokenInvalid() throws Exception {
+        server.enqueue(new MockResponse().setBody("""
+                {"access_token":"stale","expires_in":7200}
+                """));
+        server.enqueue(new MockResponse().setBody("""
+                {"errcode":40001,"errmsg":"invalid credential"}
+                """));
+        server.enqueue(new MockResponse().setBody("""
+                {"access_token":"fresh","expires_in":7200}
+                """));
+        server.enqueue(new MockResponse().setBody("""
+                {"errcode":0,"errmsg":"ok","msgid":"mid-retry"}
+                """));
+
+        String messageId = client.sendCustomerText("openid_1", "重试");
+
+        assertThat(messageId).isEqualTo("mid-retry");
+        assertThat(server.getRequestCount()).isEqualTo(4);
+    }
 }

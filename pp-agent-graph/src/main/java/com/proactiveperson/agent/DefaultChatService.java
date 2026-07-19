@@ -27,12 +27,13 @@ public class DefaultChatService implements ChatService {
     @Override
     public ChatResult chat(String userId, String sessionId, String message) {
         String resolvedUserId = StringUtils.hasText(userId) ? userId : "anonymous";
+        String memoryId = memoryId(resolvedUserId, sessionId);
         try {
-            String reply = assistant.chat(sessionId, message);
+            String reply = assistant.chat(memoryId, message);
             persistShortTermMemory(resolvedUserId, message, reply);
             log.debug("chat completed userId={} sessionId={} replyLength={}",
                     resolvedUserId, sessionId, reply == null ? 0 : reply.length());
-            return new ChatResult(sessionId, reply);
+            return new ChatResult(sessionId, reply == null ? "" : reply);
         } catch (RuntimeException ex) {
             log.warn("llm invocation failed userId={} sessionId={} cause={}",
                     resolvedUserId, sessionId, ex.getMessage());
@@ -40,11 +41,14 @@ public class DefaultChatService implements ChatService {
         }
     }
 
+    static String memoryId(String userId, String sessionId) {
+        return userId + ":" + sessionId;
+    }
+
     private void persistShortTermMemory(String userId, String message, String reply) {
         try {
             memoryService.add(userId, MemoryLayer.SHORT_TERM, formatTurn(message, reply));
         } catch (MemoryInvocationException ex) {
-            // 对话已成功：记忆写入失败不阻断用户，记录告警供运维排查
             log.warn("short-term memory persist failed userId={} cause={}", userId, ex.getMessage());
         }
     }

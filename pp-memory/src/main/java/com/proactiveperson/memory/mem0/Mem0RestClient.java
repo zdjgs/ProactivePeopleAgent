@@ -153,11 +153,11 @@ public class Mem0RestClient {
     private static boolean matchesLayer(JsonNode item, String layerValue) {
         JsonNode metadata = item.get("metadata");
         if (metadata == null || metadata.isNull()) {
-            return true;
+            return false;
         }
         JsonNode layerNode = metadata.get(Mem0LayerMetadata.LAYER_KEY);
         if (layerNode == null || layerNode.isNull()) {
-            return true;
+            return false;
         }
         return layerValue.equals(layerNode.asText());
     }

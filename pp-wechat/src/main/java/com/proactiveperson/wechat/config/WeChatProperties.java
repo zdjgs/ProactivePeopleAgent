@@ -23,6 +23,11 @@ public class WeChatProperties {
     /** 模板中承载正文的 data key，如 thing1 / content */
     private String templateContentKey = "thing1";
 
+    /**
+     * 回调 timestamp 允许的最大偏差（秒）。≤0 表示不校验（仅测试）。
+     */
+    private int callbackTimestampMaxSkewSeconds = 300;
+
     public String getProvider() {
         return provider;
     }
@@ -93,5 +98,13 @@ public class WeChatProperties {
 
     public void setTemplateContentKey(String templateContentKey) {
         this.templateContentKey = templateContentKey;
+    }
+
+    public int getCallbackTimestampMaxSkewSeconds() {
+        return callbackTimestampMaxSkewSeconds;
+    }
+
+    public void setCallbackTimestampMaxSkewSeconds(int callbackTimestampMaxSkewSeconds) {
+        this.callbackTimestampMaxSkewSeconds = callbackTimestampMaxSkewSeconds;
     }
 }

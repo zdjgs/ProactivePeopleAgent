@@ -61,8 +61,9 @@ pp-wechat / pp-mcp / pp-memory ──► pp-common
 ### 回调
 
 - URL：`GET/POST /api/wechat/callback`
-- 验签：`sha1(sort(token, timestamp, nonce))`，Token 来自 `pp.wechat.token`
-- 入站 XML 解析后记录 `openId` + `CreateTime`，刷新客服消息 48h 窗口
+- 验签：`sha1(sort(token, timestamp, nonce))` + timestamp 防重放（默认 ±300s，`pp.wechat.callback-timestamp-max-skew-seconds`）
+- 入站 XML 解析后记录 `openId` + `CreateTime`，刷新客服消息 48h 窗口（`StateStore`，可 Redis）
+- official：access_token 遇 40001/42001 清缓存并重试一次
 
 ### 48h 与降级策略（对齐设计方案）
 
@@ -89,22 +90,39 @@ pp.wechat.app-id / app-secret / token / template-id
 编排入口：`MorningPushService.pushForUser` ← `MorningPushScheduler`（`pp.proactive.morning-push-enabled=true`）。
 
 ```
-候选用户 → 门禁(用户时区窗口 / 勿扰 / 日上限≤2)
+候选用户 → 门禁(用户时区窗口 / 防干扰 / 早间槽 / 日上限≤2)
+         → tryReserveMorning（SETNX 早间槽 + INCR 日配额；失败回滚）
          → 定位授权检查（未授权降级「通用」）
          → Researcher(MCP weather/news，失败缓存降级)
          → Personalizer(Mem0 LONG_TERM 画像)
-         → Generator(LLM 可选，否则模板)
-         → WeChat.sendTextAuto → 记配额
+         → Generator(Assistant.complete 无记忆，否则模板)
+         → 追加「今天别打扰」提示 → WeChat.sendTextAuto
+         → 发送失败则 releaseMorning
 ```
 
 | 配置 | 说明 |
 |------|------|
 | `pp.proactive.morning-push-enabled` | 默认 false |
-| `pp.proactive.daily-push-limit` | 默认 2 |
+| `pp.proactive.daily-push-limit` | 默认 2（全日主动通道共用） |
 | `pp.proactive.users[]` | 候选：userId/openId/timezone/locationAuthorized/city/doNotDisturb |
-| `pp.proactive.morning-scan-cron` | 宽扫描；是否推送由用户本地 8–10 决定 |
+| `pp.proactive.morning-scan-cron` | 宽扫描；是否推送由用户本地 8–10 决定；**早间每日仅 1 次** |
+| `pp.state.store` | `memory`（默认）\|`redis` — 配额/早间槽/微信窗口 |
+| `pp.state.redis-uri` | Lettuce URI |
+| `pp.api.auth-enabled` / `pp.api.token` | Chat API `X-API-Key`（默认关闭） |
+| `pp.disturbance.cache-provider` | `memory`（默认）\|`redis` |
+| `pp.disturbance.redis-uri` | Lettuce URI，仅 redis 模式 |
 
-分期：三模式防干扰 → T-006；LangGraph Supervisor 图 → T-007；JSON 规则 CRUD → T-011；推送安全自检 → T-009。
+## 防干扰边界（T-006，已验收）
+
+- 模式：`NORMAL` / `QUIET` / `IMPORTANT_ONLY` / `CUSTOM_HOURS`（时段内仅 HIGH）
+- 临时静音：`mutedUntil`（指令「今天别打扰」→ 用户本地日末）
+- 忙碌度：`ActivityMonitor.HIGH_INTENSITY` 拦截 NORMAL，HIGH 仍可过
+- **优先级分工**：本模块只消费 `PushPriority`；HIGH 判定（截止前 24h / `importantTopics`）由调用方（T-008 / REQ-010）传入
+- 持久化：Mem0 `updatePreference(disturbance)`；缓存加速读
+- 入口：微信快捷指令、`GET/PUT /api/preferences/disturbance?userId=`
+- 配置兼容：`users[].do-not-disturb=true` 且无持久化偏好时视为 QUIET
+
+分期：LangGraph Supervisor 图 → T-007；JSON 规则 CRUD → T-011；推送安全自检 → T-009。
 
 ## 早间推送边界（T-001 骨架，已由 T-005 承接）
 

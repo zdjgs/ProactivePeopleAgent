@@ -25,8 +25,8 @@ public class MorningGenerator {
         Assistant ai = assistant.getIfAvailable();
         if (ai != null) {
             try {
-                String sessionId = "morning-" + brief.research().user().userId();
-                return ai.chat(sessionId, buildLlmPrompt(brief)).trim();
+                // 无 ChatMemory，避免污染多轮会话
+                return ai.complete(buildLlmPrompt(brief)).trim();
             } catch (Exception ex) {
                 log.warn("morning llm generate failed, fallback template: {}", ex.getMessage());
             }

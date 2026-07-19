@@ -21,16 +21,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 微信官方 HTTP API：access_token + 客服消息 + 模板消息。
+ * token 失效（40001/42001）时清缓存并重试一次。
  */
 @Component
 @ConditionalOnProperty(name = "pp.wechat.provider", havingValue = "official")
 public class WeChatOfficialApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(WeChatOfficialApiClient.class);
+    private static final Set<Integer> RETRYABLE_TOKEN_ERRORS = Set.of(40001, 42001);
 
     private final WeChatProperties properties;
     private final HttpClient httpClient;
@@ -57,14 +60,22 @@ public class WeChatOfficialApiClient {
     }
 
     public String getAccessToken() {
-        CachedToken current = cachedToken.get();
-        if (current != null && current.expiresAt().isAfter(Instant.now().plusSeconds(60))) {
-            return current.token();
-        }
-        synchronized (this) {
-            current = cachedToken.get();
+        return getAccessToken(false);
+    }
+
+    private String getAccessToken(boolean forceRefresh) {
+        if (!forceRefresh) {
+            CachedToken current = cachedToken.get();
             if (current != null && current.expiresAt().isAfter(Instant.now().plusSeconds(60))) {
                 return current.token();
+            }
+        }
+        synchronized (this) {
+            if (!forceRefresh) {
+                CachedToken current = cachedToken.get();
+                if (current != null && current.expiresAt().isAfter(Instant.now().plusSeconds(60))) {
+                    return current.token();
+                }
             }
             CachedToken refreshed = fetchAccessToken();
             cachedToken.set(refreshed);
@@ -77,7 +88,7 @@ public class WeChatOfficialApiClient {
         body.put("touser", openId);
         body.put("msgtype", "text");
         body.put("text", Map.of("content", content));
-        JsonNode root = postJson("/cgi-bin/message/custom/send?access_token=" + encode(getAccessToken()), body);
+        JsonNode root = postJsonWithTokenRetry("/cgi-bin/message/custom/send", body);
         assertOk(root, "custom/send");
         return root.path("msgid").asText(openId + "-" + Instant.now().toEpochMilli());
     }
@@ -94,9 +105,27 @@ public class WeChatOfficialApiClient {
         body.put("template_id", properties.getTemplateId());
         body.put("data", data);
 
-        JsonNode root = postJson("/cgi-bin/message/template/send?access_token=" + encode(getAccessToken()), body);
+        JsonNode root = postJsonWithTokenRetry("/cgi-bin/message/template/send", body);
         assertOk(root, "template/send");
         return root.path("msgid").asText(null);
+    }
+
+    private JsonNode postJsonWithTokenRetry(String path, Map<String, Object> body) {
+        JsonNode root = postJson(path + "?access_token=" + encode(getAccessToken(false)), body);
+        if (isRetryableTokenError(root)) {
+            log.warn("wechat access_token invalid errcode={}, refreshing and retrying once",
+                    root.path("errcode").asInt());
+            cachedToken.set(null);
+            root = postJson(path + "?access_token=" + encode(getAccessToken(true)), body);
+        }
+        return root;
+    }
+
+    private static boolean isRetryableTokenError(JsonNode root) {
+        if (root == null || !root.has("errcode")) {
+            return false;
+        }
+        return RETRYABLE_TOKEN_ERRORS.contains(root.get("errcode").asInt());
     }
 
     private CachedToken fetchAccessToken() {
@@ -172,7 +201,6 @@ public class WeChatOfficialApiClient {
         if (content == null) {
             return "";
         }
-        // 微信 thing 类字段通常限制约 20 字，超出截断并加省略号
         return content.length() <= 20 ? content : content.substring(0, 19) + "…";
     }
 

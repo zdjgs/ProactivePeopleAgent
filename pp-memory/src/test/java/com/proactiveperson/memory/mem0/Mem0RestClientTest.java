@@ -57,7 +57,8 @@ class Mem0RestClientTest {
                 {
                   "results": [
                     {"memory": "短期记忆", "metadata": {"pp_layer": "SHORT_TERM"}},
-                    {"memory": "长期画像", "metadata": {"pp_layer": "LONG_TERM"}}
+                    {"memory": "长期画像", "metadata": {"pp_layer": "LONG_TERM"}},
+                    {"memory": "无分层应丢弃"}
                   ]
                 }
                 """));

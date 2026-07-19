@@ -58,20 +58,21 @@
   1. 依赖 `langchain4j` + `langchain4j-open-ai`（可走兼容 OpenAI 协议的网关）
   2. 存在示例 `Assistant` AiService 接口
   3. 未配置 Key 时启动不失败；配置后可走通最小对话
-  4. **（深化）** 支持多轮会话记忆（至少 ChatMemory，按 sessionId）；对话结束后调用 `MemoryService.add(SHORT_TERM, …)` 边界接通
+  4. **（深化）** 支持多轮会话记忆（ChatMemory 键=`userId:sessionId`）；对话结束后调用 `MemoryService.add(SHORT_TERM, …)` 边界接通
   5. **（深化）** 超时/上游错误有结构化错误体与日志（API Key 脱敏）；温度等模型参数可配置
   6. **（深化）** 有「LLM 关闭 → 503」「参数非法 → 400」测试；可选：对 ChatModel 做单元/切片测试，不依赖真实外网
+  7. **（硬化 T-016）** `pp.api.auth-enabled=true` 时 `/api/chat` 须 `X-API-Key`；默认关闭
 
 ### REQ-003: Mem0 客户端封装
 - 优先级：P0
 - 状态：已完成
 - 模块：memory-layer
-- 描述：`Mem0RestClient` 支持 OSS（`/memories`、`/search`）与 Platform（`/v3/...`）；`pp.memory.provider=stub|mem0` 切换；metadata `pp_layer` 映射短/中/长三层
+- 描述：`Mem0RestClient` 支持 OSS/Platform；`pp_layer` **严格过滤**（无分层 metadata 不命中）；stub/mem0 可切换
 - 关联文件：`pp-memory/**`
 - 关联文档：`PP Agent.docx` §4 对话历史三层记忆
 - 验收标准：
   1. 提供 add/search/updatePreference 抽象 API
-  2. 明确短期/中期/长期分层语义（metadata.pp_layer）
+  2. 明确短期/中期/长期分层语义（metadata.pp_layer）；search 严格按层过滤
   3. Stub 与 Mem0 实现可单测；`pp.memory.provider=mem0` 切换真实 Server
   4. Platform 模式需 API Key；对话记忆写入失败不阻断聊天（降级日志）
 
@@ -79,15 +80,16 @@
 - 优先级：P0
 - 状态：已完成
 - 模块：wechat-gateway
-- 描述：回调验签 + 入站刷新 48h 窗口；`stub`/`official` 可切换；客服发送与模板降级；`sendTextAuto` 按窗口选通道
-- 关联文件：`pp-wechat/**`
+- 描述：回调验签（timestamp 防重放）+ 48h 窗口（StateStore）+ token 失效重试；`sendTextAuto` 降级
+- 关联文件：`pp-wechat/**`、`pp-common/**/state/**`
 - 关联文档：`PP Agent.docx` §4 接入微信 / 48h 窗口；`docs/sdd/architecture.md` 微信网关边界
 - 验收标准：
   1. `GET/POST /api/wechat/callback` 验签通过后可配置服务器；入站解析 openId 并刷新窗口
   2. 发送日志含 openId + sentAt（及 messageId）
   3. 文档与代码标明：48h 内客服、超窗模板、无模板则失败并提示；订阅消息留给 T-009
-  4. `pp.wechat.provider=official` 走官方 token/custom/template API（MockWebServer 单测覆盖）
+  4. `pp.wechat.provider=official` 走官方 API；40001/42001 清缓存重试一次（MockWebServer 覆盖）
   5. 默认 stub，无密钥可启动
+  6. **（硬化 T-016）** 回调 timestamp 默认 ±300s；窗口经 `pp.state.store`
 
 ---
 
@@ -95,28 +97,30 @@
 
 ### REQ-005: 早间主动对话（本地时区 8–10 点）
 - 优先级：P0
-- 状态：待审查
+- 状态：已完成
 - 模块：proactive-core
-- 描述：按用户本地时区窗口调度；门禁（勿扰/日上限≤2）；定位授权检查与降级；Researcher→Personalizer→Generator 链路；经微信 `sendTextAuto` 推送
-- 关联文件：`pp-proactive-core/**/morning/**`、`pipeline/**`、`gate/**`、`schedule/MorningPushScheduler.java`
+- 描述：按用户本地时区窗口调度；门禁（防干扰/日上限）；**早间每日一次预占**；定位降级；R→P→G；微信推送
+- 关联文件：`pp-proactive-core/**/morning/**`、`quota/**`、`gate/**`、`schedule/MorningPushScheduler.java`
 - 关联文档：`PP Agent.docx` §4 定位+定时主动对话；`docs/sdd/architecture.md` 早间推送
 - 验收标准：
   1. 调度使用 `ZonedDateTime` + **每位用户**时区判定 08:00–10:00
-  2. 推送前过门禁：勿扰跳过、日上限默认 ≤2
-  3. 内容经 Researcher（MCP）→ Personalizer（Mem0 长期）→ Generator（LLM 或模板）等价阶段
+  2. 推送前过门禁：勿扰跳过、日上限默认 ≤2；**同一用户本地日早间最多 1 次**（发送失败释放预占可重试）
+  3. 内容经 Researcher（MCP）→ Personalizer（Mem0 长期）→ Generator（LLM `complete` 无记忆或模板）
   4. 定位须授权；未授权降级通用语境仍可推送
   5. 默认 `morning-push-enabled=false`；候选用户来自 `pp.proactive.users`
+  6. **（硬化 T-016）** 配额/早间槽经 `StateStore`（memory|redis）可多实例共享
 
 ### REQ-006: 防干扰模式
 - 优先级：P0
-- 状态：待开发
+- 状态：已完成
 - 模块：proactive-core / memory-layer
-- 描述：安静模式 / 仅重要 / 自定义时段；推送前查 Mem0 偏好 + 忙碌度；消息带「今天别打扰」快捷回复
-- 关联文档：`PP Agent.docx` §4 用户设置防干扰模式
+- 描述：安静 / 仅重要 / 自定义时段；Mem0 长期偏好 + 缓存；门禁查忙碌度；消息带「今天别打扰」；微信快捷指令
+- 关联文件：`pp-proactive-core/**/disturbance/**`、`gate/MorningPushGate.java`、`web/DisturbancePreferenceController.java`
+- 关联文档：`PP Agent.docx` §4 用户设置防干扰模式；`docs/sdd/architecture.md` 防干扰
 - 验收标准：
   1. 三种模式可配置并持久化到长期偏好
-  2. 开启后仅高优先级可推送（重要话题或任务截止前 24h）
-  3. Redis 缓存偏好降低延迟
+  2. 策略闸门：调用方传入 `PushPriority.HIGH` 时在 IMPORTANT_ONLY / CUSTOM_HOURS 勿扰窗内可放行；**HIGH 判定（importantTopics 匹配、任务截止前 24h）由调用方负责，本切片只建闸门**（闭环见 REQ-010 / T-008）
+  3. Redis 缓存偏好降低延迟（默认 memory TTL，可切 `pp.disturbance.cache-provider=redis`）
 
 ### REQ-007: 动态推送规则引擎
 - 优先级：P1
@@ -165,6 +169,7 @@
   1. Task 结构化输出（JsonSchema）
   2. 提醒文案为苏格拉底式，非机械催促
   3. 用户可标记完成/暂缓
+  4. **（承接 REQ-006）** 触发主动跟进时须判定并传入 `PushPriority`：任务截止前 24h 或命中用户 `importantTopics` → `HIGH`，否则 `NORMAL`；经 `DisturbancePolicy` / 门禁后再推送
 
 ---
 
@@ -238,6 +243,9 @@
 
 | 日期 | 版本 | 变更内容 | 影响 REQ | 操作人 |
 |------|------|----------|----------|--------|
+| 2026-07-19 | v1.7 | T-006 有条件验收：HIGH 判定分期写入 REQ-010/T-008 | REQ-006, REQ-010 | AI |
+| 2026-07-19 | v1.6 | T-016 审查前硬化：早间每日一次/StateStore/鉴权/Mem0/微信 | REQ-002~005 | AI |
+| 2026-07-19 | v1.5 | T-006 防干扰三模式 + 缓存 + 快捷指令；T-005 验收通过 | REQ-006, REQ-005 | AI |
 | 2026-07-16 | v1.0 | SDD 初始化（基于 README 粗提） | REQ-001~009（旧） | AI |
 | 2026-07-16 | v1.1 | 按设计方案 V1.0 全面重写 PRD：模块对齐七大代码模块；REQ 重编号为 15 条 | 全部 | AI |
 | 2026-07-19 | v1.4 | T-005 早间主动对话链路 | REQ-005 | AI |
