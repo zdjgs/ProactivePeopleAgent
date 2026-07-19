@@ -43,6 +43,17 @@ class DefaultChatServiceTest {
     }
 
     @Test
+    void chatStillSucceedsWhenMemoryPersistFails() {
+        when(assistant.chat("session-1", "你好")).thenReturn("我在呢");
+        org.mockito.Mockito.doThrow(new com.proactiveperson.common.exception.MemoryInvocationException("mem0 down"))
+                .when(memoryService).add(eq("u1"), eq(MemoryLayer.SHORT_TERM), any());
+
+        ChatService.ChatResult result = chatService.chat("u1", "session-1", "你好");
+
+        assertThat(result.reply()).isEqualTo("我在呢");
+    }
+
+    @Test
     void chatUsesAnonymousUserWhenUserIdMissing() {
         when(assistant.chat("session-2", "hi")).thenReturn("你好");
 

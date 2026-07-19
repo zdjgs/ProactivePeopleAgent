@@ -38,6 +38,7 @@ public class InMemoryMemoryService implements MemoryService {
     @Override
     public void updatePreference(String userId, String key, String value) {
         preferences.computeIfAbsent(userId, id -> new ConcurrentHashMap<>()).put(key, value);
+        add(userId, MemoryLayer.LONG_TERM, "preference:" + key + "=" + value);
     }
 
     private static String key(String userId, MemoryLayer layer) {

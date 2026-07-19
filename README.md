@@ -11,7 +11,8 @@
 - Spring Boot 3.5 + JDK 21
 - LangChain4j（对话 / Tool）
 - LangGraph4J（Multi-Agent，后续接入）
-- Mem0 / MCP / 微信（接口已预留，Stub 可启动）
+- Mem0：`pp.memory.provider=stub|mem0`（见 `docs/sdd/architecture.md`）
+- 微信：`pp.wechat.provider=stub|official`；回调 `GET/POST /api/wechat/callback`
 
 ## 模块
 

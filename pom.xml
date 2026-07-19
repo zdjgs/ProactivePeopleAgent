@@ -34,6 +34,7 @@
         <java.version>21</java.version>
         <langchain4j.version>1.17.2</langchain4j.version>
         <langgraph4j.version>1.8.19</langgraph4j.version>
+        <okhttp.version>4.12.0</okhttp.version>
     </properties>
 
     <dependencyManagement>
@@ -92,6 +93,11 @@
                 <version>${langgraph4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver</artifactId>
+                <version>${okhttp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

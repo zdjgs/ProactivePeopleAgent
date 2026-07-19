@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     private HttpStatus mapStatus(AppException ex) {
         return switch (ex.getCode()) {
             case "LLM_NOT_ENABLED" -> HttpStatus.SERVICE_UNAVAILABLE;
-            case "LLM_INVOCATION_FAILED" -> HttpStatus.BAD_GATEWAY;
+            case "LLM_INVOCATION_FAILED", "MEMORY_INVOCATION_FAILED", "WECHAT_INVOCATION_FAILED" -> HttpStatus.BAD_GATEWAY;
             default -> HttpStatus.BAD_REQUEST;
         };
     }

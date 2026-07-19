@@ -27,8 +27,22 @@ pp:
     chat-memory-max-messages: 20
   memory:
     provider: stub
+    mem0:
+      mode: oss
+      base-url: ${MEM0_BASE_URL:http://localhost:8000}
+      api-key: ${MEM0_API_KEY:}
+      timeout-seconds: 10
+      infer-on-add: false
   wechat:
     provider: stub
+    app-id: ${WECHAT_APP_ID:}
+    app-secret: ${WECHAT_APP_SECRET:}
+    token: ${WECHAT_TOKEN:}
+    api-base-url: ${WECHAT_API_BASE_URL:https://api.weixin.qq.com}
+    timeout-seconds: 10
+    customer-service-window-hours: 48
+    template-id: ${WECHAT_TEMPLATE_ID:}
+    template-content-key: thing1
   mcp:
     provider: stub
   monitor:

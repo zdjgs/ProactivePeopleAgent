@@ -26,6 +26,7 @@ class ProactivePersonApplicationTests {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("UP"))
                 .andExpect(jsonPath("$.data.llmEnabled").value(false))
+                .andExpect(jsonPath("$.data.memoryProvider").value("stub"))
                 .andExpect(jsonPath("$.data.infra.postgresEnabled").value(false));
     }
 

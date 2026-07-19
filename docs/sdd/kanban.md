@@ -8,8 +8,6 @@
 ### P0（Week 1–2 / 生产前核心）
 | ID | 任务 | 优先级 | 关联 REQ | 创建时间 | 验收标准 |
 |----|------|--------|----------|----------|----------|
-| T-003 | Mem0 客户端封装深化（真实 Server 切换） | P0 | REQ-003 | 2026-07-16 | 在现有 Stub 上接 Mem0 REST；三层语义；配置可切真实 Mem0 |
-| T-004 | 微信客服消息网关深化 | P0 | REQ-004 | 2026-07-16 | 在 Stub 上接官方 API；验签回调；48h/模板降级策略落地 |
 | T-005 | 早间主动对话调度（8–10 点） | P0 | REQ-005 | 2026-07-16 | 用户时区窗口；规则引擎门禁；日上限≤2；定位授权检查 |
 | T-006 | 防干扰模式 | P0 | REQ-006 | 2026-07-16 | 三模式；仅高优可推；快捷「今天别打扰」；Redis 缓存偏好 |
 | T-007 | LangGraph4J Multi-Agent + ReAct 最小图 | P0 | REQ-008 | 2026-07-16 | Supervisor 最小图可跑；maxIterations；结果可回写 Mem0 |
@@ -38,12 +36,14 @@
 ## 待审查 👀
 | ID | 任务 | 提交时间 | 审查人 | 备注 |
 |----|------|----------|--------|------|
-| T-001 | 搭建 Spring Boot 3 多模块骨架 | 2026-07-16 | - | 切片A：GlobalExceptionHandler、application-{local,dev}.yml、InfraProperties 占位、MorningPushWindowService+调度门禁、docs/sdd/architecture.md |
-| T-002 | LangChain4j 基础接入（AiService） | 2026-07-16 | - | 切片B：ChatMemory 多轮、ChatService→SHORT_TERM、温度可配、503/400/502 错误体、DefaultChatServiceTest+API 测试 |
+| T-004 | 微信客服消息网关深化 | 2026-07-16 | - | 回调验签、48h 窗口、客服/模板 API、sendTextAuto 降级；MockWebServer 单测 |
 
 ## 已完成 ✅
 | ID | 任务 | 完成时间 | 实际耗时 | 关联 Commit |
 |----|------|----------|----------|-------------|
+| T-001 | 搭建 Spring Boot 3 多模块骨架 | 2026-07-16 | - | 用户验收通过 |
+| T-002 | LangChain4j 基础接入（AiService） | 2026-07-16 | - | 用户验收通过 |
+| T-003 | Mem0 客户端封装深化 | 2026-07-16 | - | 用户继续 T-004，视为验收通过 |
 
 ## 需求变更 🔄⬅️
 | ID | 原任务 | 变更原因 | 新 REQ | 回退时间 |
