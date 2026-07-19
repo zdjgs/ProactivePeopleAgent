@@ -139,14 +139,15 @@
 
 ### REQ-008: LangGraph4J Multi-Agent + ReAct
 - 优先级：P0
-- 状态：待开发
+- 状态：待审查
 - 模块：agent-graph
-- 描述：Supervisor 分派 Researcher/Personalizer/Executor；复杂问题走 ReAct；`maxIterations` 防死循环
-- 关联文档：`PP Agent.docx` §4 复杂问题多Agent+ReAct
+- 描述：Supervisor 分派 Researcher/Personalizer/Executor；规则路由 + 图级迭代上限（LLM ReAct 深化可后续）；结果回写 Mem0 中期层
+- 关联文件：`pp-agent-graph/**/graph/**`、`AgentGraphService.java`、`pp-app/**/AgentController.java`
+- 关联文档：`PP Agent.docx` §4 复杂问题多Agent+ReAct；`docs/sdd/architecture.md` Supervisor 图
 - 验收标准：
   1. CompiledStateGraph 可运行最小图
-  2. 工具调用有迭代上限
-  3. 结果可回写 Mem0
+  2. 工具调用有迭代上限（`pp.agent.graph.max-iterations`）
+  3. 结果可回写 Mem0（MID_TERM）
 
 ### REQ-009: Self-Reflection 对话特性调整
 - 优先级：P1
@@ -243,6 +244,7 @@
 
 | 日期 | 版本 | 变更内容 | 影响 REQ | 操作人 |
 |------|------|----------|----------|--------|
+| 2026-07-19 | v1.8 | T-007 Supervisor 最小图（规则路由/maxIterations/Mem0） | REQ-008 | AI |
 | 2026-07-19 | v1.7 | T-006 有条件验收：HIGH 判定分期写入 REQ-010/T-008 | REQ-006, REQ-010 | AI |
 | 2026-07-19 | v1.6 | T-016 审查前硬化：早间每日一次/StateStore/鉴权/Mem0/微信 | REQ-002~005 | AI |
 | 2026-07-19 | v1.5 | T-006 防干扰三模式 + 缓存 + 快捷指令；T-005 验收通过 | REQ-006, REQ-005 | AI |

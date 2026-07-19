@@ -1,5 +1,17 @@
 # 执行日志
 
+## [2026-07-19 15:06] - 完成编码（T-007 Supervisor 最小图）
+- 任务 ID：T-007
+- 关联 REQ：REQ-008
+- 操作详情：
+  - 新增：`AgentGraphState`/`SupervisorRouter`/`AgentGraphNodes`/`AgentGraphFactory`/`AgentGraphService`
+  - 新增：`AgentController`（`POST /api/agent/run`）、`AgentGraphRuntimeProperties`（`pp.agent.graph.max-iterations`）
+  - 依赖：`pp-agent-graph` → `pp-mcp`；鉴权路径对齐 `/api/agent/**`
+  - 测试：`SupervisorRouterTest`、`AgentGraphServiceTest`；`mvn -pl pp-app -am clean test` 通过
+- 状态变更：T-007 ⬜ → 🔄 → 👀
+- 备注：本切片为规则型 Supervisor；完整 LLM ReAct 可后续深化
+- Commit：（未提交）
+
 ## [2026-07-19 14:54] - 有条件验收通过（T-006）
 - 任务 ID：T-006
 - 关联 REQ：REQ-006 → REQ-010（分期）

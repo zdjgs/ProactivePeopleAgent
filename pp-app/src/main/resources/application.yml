@@ -32,6 +32,9 @@ pp:
     temperature: ${OPENAI_TEMPERATURE:0.7}
     timeout-seconds: 60
     chat-memory-max-messages: 20
+  agent:
+    graph:
+      max-iterations: ${PP_AGENT_GRAPH_MAX_ITERATIONS:5}
   memory:
     provider: stub
     mem0:

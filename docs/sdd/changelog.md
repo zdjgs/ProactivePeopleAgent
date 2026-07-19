@@ -1,5 +1,12 @@
 # 变更日志
 
+## [v1.8] - 2026-07-19
+### 变更类型：新增
+- 影响 REQ：REQ-008
+- 变更描述：T-007 LangGraph4J Supervisor 最小图：规则路由 Researcher/Personalizer/Executor；`maxIterations`；结果写 Mem0 MID_TERM；`POST /api/agent/run`（与 Chat 同套 X-API-Key）；不替换 DefaultChatService
+- 新增任务：无（T-007 👀）
+- 原因：设计方案 §4 复杂问题多 Agent + ReAct 骨架
+
 ## [v1.7] - 2026-07-19
 ### 变更类型：修改
 - 影响 REQ：REQ-006、REQ-010

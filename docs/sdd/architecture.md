@@ -9,7 +9,7 @@ pp-app（启动 / HTTP / 全局异常）
 
 pp-admin ──► pp-proactive-core
 pp-proactive-core ──► pp-agent-graph, pp-memory, pp-wechat, pp-mcp
-pp-agent-graph ──► pp-memory, pp-common
+pp-agent-graph ──► pp-memory, pp-mcp, pp-common
 pp-monitor ──► pp-mcp, pp-common
 pp-wechat / pp-mcp / pp-memory ──► pp-common
 ```
@@ -20,7 +20,7 @@ pp-wechat / pp-mcp / pp-memory ──► pp-common
 |------|------|----------|
 | `pp-common` | 公共 API 模型、业务异常、工具 | `ApiResponse`、异常体系、`SensitiveDataMasker` |
 | `pp-memory` | Mem0 三层记忆封装 | `MemoryService`；`stub` / `mem0`（OSS/Platform REST） |
-| `pp-agent-graph` | LangChain4j / LangGraph4J | `Assistant` 多轮记忆、`ChatService`、短期层落库 |
+| `pp-agent-graph` | LangChain4j / LangGraph4J | `Assistant`/`ChatService`；Supervisor 最小图（T-007） |
 | `pp-proactive-core` | 定时/规则/主动消息 | 早间推送全链路（门禁/配额/R→P→G/微信） |
 | `pp-wechat` | 微信收发与推送 | 回调验签、48h 窗口、客服/模板发送（`stub`/`official`） |
 | `pp-mcp` | MCP 工具发现 | 接口 + Noop Stub |
@@ -108,9 +108,22 @@ pp.wechat.app-id / app-secret / token / template-id
 | `pp.proactive.morning-scan-cron` | 宽扫描；是否推送由用户本地 8–10 决定；**早间每日仅 1 次** |
 | `pp.state.store` | `memory`（默认）\|`redis` — 配额/早间槽/微信窗口 |
 | `pp.state.redis-uri` | Lettuce URI |
-| `pp.api.auth-enabled` / `pp.api.token` | Chat API `X-API-Key`（默认关闭） |
+| `pp.api.auth-enabled` / `pp.api.token` | Chat / Agent API `X-API-Key`（默认关闭） |
+| `pp.agent.graph.max-iterations` | Supervisor 迭代上限，默认 5 |
 | `pp.disturbance.cache-provider` | `memory`（默认）\|`redis` |
 | `pp.disturbance.redis-uri` | Lettuce URI，仅 redis 模式 |
+
+## Supervisor 图边界（T-007）
+
+```
+START → supervisor ⇄ researcher | personalizer | executor → END(FINISH)
+```
+
+- 规则型 Supervisor（关键词/缺口路由）；不替换 `DefaultChatService`
+- Researcher → `McpToolClient`（weather/news）；Personalizer → `MemoryService.search(LONG_TERM)`；Executor → 模板（可选 `Assistant.complete` 润色）
+- `maxIterations` + `CompiledGraph.setMaxIterations` 双保险
+- 结束回写 `MemoryService.add(MID_TERM, "agent_graph:…")`
+- 入口：`AgentGraphService.run` / `POST /api/agent/run`
 
 ## 防干扰边界（T-006，已验收）
 
@@ -122,7 +135,7 @@ pp.wechat.app-id / app-secret / token / template-id
 - 入口：微信快捷指令、`GET/PUT /api/preferences/disturbance?userId=`
 - 配置兼容：`users[].do-not-disturb=true` 且无持久化偏好时视为 QUIET
 
-分期：LangGraph Supervisor 图 → T-007；JSON 规则 CRUD → T-011；推送安全自检 → T-009。
+分期：JSON 规则 CRUD → T-011；推送安全自检 → T-009；LLM ReAct 深化可挂在 T-007 后续切片。
 
 ## 早间推送边界（T-001 骨架，已由 T-005 承接）
 

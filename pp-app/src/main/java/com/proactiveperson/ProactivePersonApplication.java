@@ -1,6 +1,7 @@
 package com.proactiveperson;
 
 import com.proactiveperson.agent.config.AgentGraphProperties;
+import com.proactiveperson.agent.config.AgentGraphRuntimeProperties;
 import com.proactiveperson.app.config.ApiSecurityProperties;
 import com.proactiveperson.app.config.InfraProperties;
 import com.proactiveperson.common.state.StateStoreProperties;
@@ -15,6 +16,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @SpringBootApplication(scanBasePackages = "com.proactiveperson")
 @EnableConfigurationProperties({
         AgentGraphProperties.class,
+        AgentGraphRuntimeProperties.class,
         ProactiveProperties.class,
         InfraProperties.class,
         MemoryProperties.class,
