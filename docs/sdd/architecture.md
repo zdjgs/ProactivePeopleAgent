@@ -21,7 +21,7 @@ pp-wechat / pp-mcp / pp-memory ──► pp-common
 | `pp-common` | 公共 API 模型、业务异常、工具 | `ApiResponse`、异常体系、`SensitiveDataMasker` |
 | `pp-memory` | Mem0 三层记忆封装 | `MemoryService`；`stub` / `mem0`（OSS/Platform REST） |
 | `pp-agent-graph` | LangChain4j / LangGraph4J | `Assistant` 多轮记忆、`ChatService`、短期层落库 |
-| `pp-proactive-core` | 定时/规则/主动消息 | `MorningPushWindowService`、调度门禁 |
+| `pp-proactive-core` | 定时/规则/主动消息 | 早间推送全链路（门禁/配额/R→P→G/微信） |
 | `pp-wechat` | 微信收发与推送 | 回调验签、48h 窗口、客服/模板发送（`stub`/`official`） |
 | `pp-mcp` | MCP 工具发现 | 接口 + Noop Stub |
 | `pp-monitor` | 浏览器/IDE 忙碌度 | 接口 + Idle Stub |
@@ -84,7 +84,29 @@ pp.wechat.app-id / app-secret / token / template-id
 
 安全自检 + 审计日志属于 **T-009 / REQ-013**，不在本切片范围。
 
-## 早间推送边界（T-001 深化）
+## 早间推送边界（T-005）
+
+编排入口：`MorningPushService.pushForUser` ← `MorningPushScheduler`（`pp.proactive.morning-push-enabled=true`）。
+
+```
+候选用户 → 门禁(用户时区窗口 / 勿扰 / 日上限≤2)
+         → 定位授权检查（未授权降级「通用」）
+         → Researcher(MCP weather/news，失败缓存降级)
+         → Personalizer(Mem0 LONG_TERM 画像)
+         → Generator(LLM 可选，否则模板)
+         → WeChat.sendTextAuto → 记配额
+```
+
+| 配置 | 说明 |
+|------|------|
+| `pp.proactive.morning-push-enabled` | 默认 false |
+| `pp.proactive.daily-push-limit` | 默认 2 |
+| `pp.proactive.users[]` | 候选：userId/openId/timezone/locationAuthorized/city/doNotDisturb |
+| `pp.proactive.morning-scan-cron` | 宽扫描；是否推送由用户本地 8–10 决定 |
+
+分期：三模式防干扰 → T-006；LangGraph Supervisor 图 → T-007；JSON 规则 CRUD → T-011；推送安全自检 → T-009。
+
+## 早间推送边界（T-001 骨架，已由 T-005 承接）
 
 1. `MorningPushWindowService` 用 `ZonedDateTime` + 用户时区判断 08:00–10:00（左闭右开）
-2. `MorningPushScheduler` 仅在窗口内打扫描占位日志；用户遍历与推送在 T-005 实现
+2. `MorningPushScheduler` 扫描候选并调用 `MorningPushService`

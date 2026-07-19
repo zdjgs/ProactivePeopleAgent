@@ -1,5 +1,17 @@
 # 执行日志
 
+## [2026-07-19 14:38] - 完成编码（T-005 早间主动对话）
+- 任务 ID：T-005
+- 关联 REQ：REQ-005
+- 操作详情：
+  - 新增：`ProactiveUser`/`ConfigProactiveUserRepository`、`MorningPushGate`、`DailyPushQuotaService`
+  - 新增：`LocationContextResolver`、`MorningResearcher`/`Personalizer`/`Generator`、`MorningPushService`
+  - 改造：`MorningPushScheduler` 遍历候选并编排推送；MCP stub 提供 weather/news 摘要
+  - 测试：Gate/Location/Generator/MorningPushService
+- 状态变更：T-005 🔄 → 👀；T-004 → ✅
+- 验证：`mvn -pl pp-app -am clean test` 通过
+- Commit：（未提交）
+
 ## [2026-07-16 16:43] - 完成编码（T-004 微信网关）
 - 任务 ID：T-004
 - 关联 REQ：REQ-004

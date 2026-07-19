@@ -53,7 +53,17 @@ pp:
     default-timezone: Asia/Shanghai
     morning-window-start-hour: 8
     morning-window-end-hour: 10
-    morning-scan-cron: "0 */1 8-10 * * *"
+    # 宽扫描：每位用户是否推送由本地时区 8-10 窗口决定
+    morning-scan-cron: "0 */1 * * * *"
+    users: []
+    # 示例（启用 morning-push 时取消注释或在 local profile 配置）:
+    # users:
+    #   - user-id: demo-user
+    #     open-id: demo-openid
+    #     timezone: Asia/Shanghai
+    #     location-authorized: true
+    #     city: 上海
+    #     do-not-disturb: false
   infra:
     postgres:
       enabled: false

@@ -77,7 +77,7 @@
 
 ### REQ-004: 微信客服消息网关
 - 优先级：P0
-- 状态：待审查
+- 状态：已完成
 - 模块：wechat-gateway
 - 描述：回调验签 + 入站刷新 48h 窗口；`stub`/`official` 可切换；客服发送与模板降级；`sendTextAuto` 按窗口选通道
 - 关联文件：`pp-wechat/**`
@@ -95,15 +95,17 @@
 
 ### REQ-005: 早间主动对话（本地时区 8–10 点）
 - 优先级：P0
-- 状态：待开发
+- 状态：待审查
 - 模块：proactive-core
-- 描述：每日用户本地 08:00–10:00，结合位置 + MCP + Mem0 画像，经 Multi-Agent 生成并推送个性化内容
-- 关联文档：`PP Agent.docx` §4 定位+定时主动对话
+- 描述：按用户本地时区窗口调度；门禁（勿扰/日上限≤2）；定位授权检查与降级；Researcher→Personalizer→Generator 链路；经微信 `sendTextAuto` 推送
+- 关联文件：`pp-proactive-core/**/morning/**`、`pipeline/**`、`gate/**`、`schedule/MorningPushScheduler.java`
+- 关联文档：`PP Agent.docx` §4 定位+定时主动对话；`docs/sdd/architecture.md` 早间推送
 - 验收标准：
-  1. 调度使用 `ZonedDateTime` + 用户时区
-  2. 推送前过规则引擎（含防打扰、日上限默认 ≤2）
-  3. 内容经 Researcher→Personalizer→Generator 链路（或等价阶段）
-  4. 定位须用户授权，无授权则降级
+  1. 调度使用 `ZonedDateTime` + **每位用户**时区判定 08:00–10:00
+  2. 推送前过门禁：勿扰跳过、日上限默认 ≤2
+  3. 内容经 Researcher（MCP）→ Personalizer（Mem0 长期）→ Generator（LLM 或模板）等价阶段
+  4. 定位须授权；未授权降级通用语境仍可推送
+  5. 默认 `morning-push-enabled=false`；候选用户来自 `pp.proactive.users`
 
 ### REQ-006: 防干扰模式
 - 优先级：P0
@@ -238,6 +240,7 @@
 |------|------|----------|----------|--------|
 | 2026-07-16 | v1.0 | SDD 初始化（基于 README 粗提） | REQ-001~009（旧） | AI |
 | 2026-07-16 | v1.1 | 按设计方案 V1.0 全面重写 PRD：模块对齐七大代码模块；REQ 重编号为 15 条 | 全部 | AI |
+| 2026-07-19 | v1.4 | T-005 早间主动对话链路 | REQ-005 | AI |
 | 2026-07-16 | v1.3 | T-004 微信网关：验签回调、48h、客服/模板 | REQ-004 | AI |
 | 2026-07-16 | v1.2 | T-003 Mem0 REST 客户端（OSS/Platform） | REQ-003 | AI |
 | 2026-07-16 | v1.1 | T-001/T-002 用户验收通过 | REQ-001, REQ-002 | 用户 |
