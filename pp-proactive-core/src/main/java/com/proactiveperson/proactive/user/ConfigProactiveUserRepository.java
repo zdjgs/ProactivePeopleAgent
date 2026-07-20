@@ -47,6 +47,16 @@ public class ConfigProactiveUserRepository implements ProactiveUserRepository {
                 .findFirst();
     }
 
+    @Override
+    public Optional<ProactiveUser> findByUserId(String userId) {
+        if (!StringUtils.hasText(userId)) {
+            return Optional.empty();
+        }
+        return findAllCandidates().stream()
+                .filter(u -> userId.equals(u.userId()))
+                .findFirst();
+    }
+
     private ZoneId resolveZone(String timezone) {
         if (!StringUtils.hasText(timezone)) {
             return ZoneId.of(properties.getDefaultTimezone());

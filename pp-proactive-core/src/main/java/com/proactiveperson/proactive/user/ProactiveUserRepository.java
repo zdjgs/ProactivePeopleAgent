@@ -11,4 +11,6 @@ public interface ProactiveUserRepository {
     List<ProactiveUser> findAllCandidates();
 
     Optional<ProactiveUser> findByOpenId(String openId);
+
+    Optional<ProactiveUser> findByUserId(String userId);
 }

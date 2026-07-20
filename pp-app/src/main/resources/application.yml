@@ -35,6 +35,10 @@ pp:
   agent:
     graph:
       max-iterations: ${PP_AGENT_GRAPH_MAX_ITERATIONS:5}
+  task:
+    follow-up-enabled: ${PP_TASK_FOLLOW_UP_ENABLED:false}
+    due-high-hours: 24
+    default-snooze-hours: 4
   memory:
     provider: stub
     mem0:

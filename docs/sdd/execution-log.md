@@ -1,5 +1,17 @@
 # 执行日志
 
+## [2026-07-20 09:16] - 完成编码（T-008 苏格拉底式任务跟进）
+- 任务 ID：T-008
+- 关联 REQ：REQ-010
+- 操作详情：
+  - 新增：`Task`/`TaskExtractor`/`SocraticReminderComposer`/`TaskPushPriorityResolver`/`TaskFollowUpGate`/`TaskFollowUpService`
+  - 新增：`TaskController`（extract/list/complete/snooze/nudge）；`DailyPushQuotaService.tryReserveDaily`
+  - 配置：`pp.task.*`；鉴权路径 `/api/tasks/**`
+  - 测试：Priority/Gate/Composer/Extractor/Service；`mvn -pl pp-app -am clean test` 通过
+- 状态变更：T-007 👀 → ✅；T-008 ⬜ → 🔄 → 👀
+- 备注：本切片未做习惯时间 cron / LangGraph FollowUpAgent
+- Commit：（未提交）
+
 ## [2026-07-19 15:06] - 完成编码（T-007 Supervisor 最小图）
 - 任务 ID：T-007
 - 关联 REQ：REQ-008

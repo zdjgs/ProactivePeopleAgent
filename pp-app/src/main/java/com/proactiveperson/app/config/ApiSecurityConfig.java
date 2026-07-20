@@ -38,6 +38,9 @@ public class ApiSecurityConfig implements WebMvcConfigurer {
                 }
                 return true;
             }
-        }).addPathPatterns("/api/chat", "/api/chat/**", "/api/agent", "/api/agent/**");
+        }).addPathPatterns(
+                "/api/chat", "/api/chat/**",
+                "/api/agent", "/api/agent/**",
+                "/api/tasks", "/api/tasks/**");
     }
 }

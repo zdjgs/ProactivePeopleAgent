@@ -113,6 +113,19 @@ pp.wechat.app-id / app-secret / token / template-id
 | `pp.disturbance.cache-provider` | `memory`（默认）\|`redis` |
 | `pp.disturbance.redis-uri` | Lettuce URI，仅 redis 模式 |
 
+## 任务跟进边界（T-008）
+
+```
+extract(text|SHORT_TERM) → Task 仓储
+nudge → TaskPushPriorityResolver(24h|importantTopics)
+      → TaskFollowUpGate(DisturbancePolicy+忙碌度+日配额)
+      → SocraticReminderComposer → WeChat.sendTextAuto
+```
+
+- REST：`POST /api/tasks/extract`、`GET /api/tasks`、`POST .../complete|snooze|nudge`
+- 不含早间 8–10 窗口；日配额与早间共用 `pp.proactive.daily-push-limit`
+- 分期：习惯时间调度 / LangGraph FollowUpAgent 后续
+
 ## Supervisor 图边界（T-007）
 
 ```

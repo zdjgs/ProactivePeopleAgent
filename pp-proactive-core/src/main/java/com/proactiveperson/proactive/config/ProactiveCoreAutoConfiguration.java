@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties({ProactiveProperties.class, DisturbanceProperties.class})
+@EnableConfigurationProperties({ProactiveProperties.class, DisturbanceProperties.class, TaskProperties.class})
 @ComponentScan(basePackages = "com.proactiveperson.proactive")
 public class ProactiveCoreAutoConfiguration {
 }

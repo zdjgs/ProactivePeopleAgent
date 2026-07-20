@@ -78,6 +78,25 @@ public class DailyPushQuotaService {
         stateStore.decrement(quotaKey(user, date));
     }
 
+    /**
+     * 非早间主动通道预占（仅日配额，不占早间槽）。用于任务跟进等。
+     */
+    public ReserveResult tryReserveDaily(ProactiveUser user, ZonedDateTime nowInUserZone) {
+        LocalDate date = nowInUserZone.toLocalDate();
+        Duration ttl = ttlForLocalDate(date);
+        String quota = quotaKey(user, date);
+        long count = stateStore.increment(quota, ttl);
+        if (count > properties.getDailyPushLimit()) {
+            stateStore.decrement(quota);
+            return ReserveResult.DAILY_LIMIT;
+        }
+        return ReserveResult.RESERVED;
+    }
+
+    public void releaseDaily(ProactiveUser user, ZonedDateTime nowInUserZone) {
+        stateStore.decrement(quotaKey(user, nowInUserZone.toLocalDate()));
+    }
+
     /** 测试辅助：直接记一次成功推送（不占早间槽）。 */
     public void recordPush(ProactiveUser user, ZonedDateTime nowInUserZone) {
         stateStore.increment(quotaKey(user, nowInUserZone.toLocalDate()), ttlForLocalDate(nowInUserZone.toLocalDate()));

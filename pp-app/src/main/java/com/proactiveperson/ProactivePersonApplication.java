@@ -8,6 +8,7 @@ import com.proactiveperson.common.state.StateStoreProperties;
 import com.proactiveperson.memory.config.MemoryProperties;
 import com.proactiveperson.proactive.config.DisturbanceProperties;
 import com.proactiveperson.proactive.config.ProactiveProperties;
+import com.proactiveperson.proactive.config.TaskProperties;
 import com.proactiveperson.wechat.config.WeChatProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,7 +24,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
         WeChatProperties.class,
         StateStoreProperties.class,
         ApiSecurityProperties.class,
-        DisturbanceProperties.class
+        DisturbanceProperties.class,
+        TaskProperties.class
 })
 public class ProactivePersonApplication {
 

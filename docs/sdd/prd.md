@@ -139,7 +139,7 @@
 
 ### REQ-008: LangGraph4J Multi-Agent + ReAct
 - 优先级：P0
-- 状态：待审查
+- 状态：已完成
 - 模块：agent-graph
 - 描述：Supervisor 分派 Researcher/Personalizer/Executor；规则路由 + 图级迭代上限（LLM ReAct 深化可后续）；结果回写 Mem0 中期层
 - 关联文件：`pp-agent-graph/**/graph/**`、`AgentGraphService.java`、`pp-app/**/AgentController.java`
@@ -162,10 +162,11 @@
 
 ### REQ-010: 苏格拉底式任务跟进
 - 优先级：P0
-- 状态：待开发
+- 状态：待审查
 - 模块：agent-graph / proactive-core
-- 描述：从对话抽取 Task；截止前 24h / 习惯时间触发 FollowUpAgent；提问式引导
-- 关联文档：`PP Agent.docx` §4 功能点4
+- 描述：从对话抽取 Task；截止前 24h 触发提问式跟进；完成/暂缓；PushPriority 过防干扰闸门
+- 关联文件：`pp-proactive-core/**/task/**`、`web/TaskController.java`
+- 关联文档：`PP Agent.docx` §4 功能点4；`docs/sdd/architecture.md` 任务跟进
 - 验收标准：
   1. Task 结构化输出（JsonSchema）
   2. 提醒文案为苏格拉底式，非机械催促
@@ -244,6 +245,7 @@
 
 | 日期 | 版本 | 变更内容 | 影响 REQ | 操作人 |
 |------|------|----------|----------|--------|
+| 2026-07-20 | v1.9 | T-008 苏格拉底任务跟进；T-007 验收通过 | REQ-010, REQ-008 | AI |
 | 2026-07-19 | v1.8 | T-007 Supervisor 最小图（规则路由/maxIterations/Mem0） | REQ-008 | AI |
 | 2026-07-19 | v1.7 | T-006 有条件验收：HIGH 判定分期写入 REQ-010/T-008 | REQ-006, REQ-010 | AI |
 | 2026-07-19 | v1.6 | T-016 审查前硬化：早间每日一次/StateStore/鉴权/Mem0/微信 | REQ-002~005 | AI |
